@@ -1,7 +1,7 @@
 {
-  "name": "dndmap",
+  "name": "webclient",
   "version": "1.0.0",
-  "description": "map",
+  "description": "",
   "main": "app.js",
   "scripts": {
     "start": "beefy app.js:bundle.js --live",

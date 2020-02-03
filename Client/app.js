@@ -2,6 +2,9 @@
 const L = require('leaflet');
 require('leaflet-draw');
 
+// server ip
+var serverIp = "http://127.0.0.1:3333"
+
 
 // Initialize the map
 var mapMinZoom = 0;
@@ -32,17 +35,26 @@ map.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
 
-        if (type === "polyline") {
-            layer.toGeoJSON()
-        }
+    if (type === "polyline") {
+        var GeoJSONLayer = layer.toGeoJSON();
+        fetch(`${serverIp}/polyline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                polyline: JSON.stringify(GeoJSONLayer)
+            })
+        });
+    }
 
     drawnItems.addLayer(layer);
 });
 
-map.on(L.Draw.Event.EDITED, function(e) {
+map.on(L.Draw.Event.EDITED, function (e) {
 
-})
+});
 
-map.on(L.Draw.Event.DELETED, function(e) {
+map.on(L.Draw.Event.DELETED, function (e) {
 
-})
+});

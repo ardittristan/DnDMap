@@ -1,3 +1,5 @@
 node_modules
-map
+Client/map/*
+!Client/map/3
 package-lock.json
+*.db
