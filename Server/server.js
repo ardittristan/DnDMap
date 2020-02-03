@@ -6,7 +6,7 @@ var cors = require('cors');
 var app = express();
 
 app.use(cors());
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 
 //! Init database
@@ -25,7 +25,7 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
             console.error(err.message);
         }
     });
-    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("GeoJSON" TEXT NOT NULL)`, function (err) {
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("GeoJSON" TEXT NOT NULL, "Radius" INTEGER NOT NULL)`, function (err) {
         if (err) {
             console.error(err.message);
         }
@@ -37,10 +37,10 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
     });
 });
 
+//* Receive creation notices
 app.post('/polyline', function (req, res) {
     console.log("fetched");
     // get sent data
-    console.log(req.body);
     var input = req.body;
     // insert
     db.run(/*sql*/`INSERT INTO PolyLine VALUES (?)`, [input['polyline']]);
@@ -49,20 +49,44 @@ app.post('/polyline', function (req, res) {
 app.post('/circle', function (req, res) {
     console.log("fetched");
     // get sent data
-    console.log(req.body);
     var input = req.body;
     // insert
-    db.run(/*sql*/`INSERT INTO Circle VALUES (?)`, [input['circle']]);
+    db.run(/*sql*/`INSERT INTO Circle VALUES (?, ?)`, [input['circle'], input['radius']]);
     res.end('Success');
 });
 app.post('/marker', function (req, res) {
     console.log("fetched");
     // get sent data
-    console.log(req.body);
     var input = req.body;
     // insert
     db.run(/*sql*/`INSERT INTO Marker VALUES (?)`, [input['marker']]);
     res.end('Success');
+});
+
+
+//* Receive deletion notices
+app.post('/deletepolyline', function (req, res) {
+    console.log("fetched");
+    // get sent data
+    var input = req.body;
+    // delete
+    db.run(/*sql*/`DELETE FROM PolyLine WHERE GeoJSON = (?)`, [input['polyline']]);
+    res.end('Success');
+});
+app.post('/deletecircle', function (req, res) {
+    console.log("fetched");
+    // get sent data
+    var input = req.body;
+    // delete
+    db.run(/*sql*/`DELETE FROM Circle WHERE GeoJSON = (?) AND Radius = (?)`, [input['circle'], input['radius']]);
+    res.end('Success');
+});
+app.post('/deletemarker', function (req, res) {
+    console.log("fetched");
+    // get sent data
+    var input = req.body;
+    // delete
+    db.run(/*sql*/`DELETE FROM Marker WHERE GeoJSON = (?)`, [input['marker']]);
 });
 
 app.listen(3333, function () { console.log("listening on 3333"); });

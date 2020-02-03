@@ -31,7 +31,8 @@ var drawControl = new L.Control.Draw({
         circlemarker: false
     },
     edit: {
-        featureGroup: drawnItems
+        featureGroup: drawnItems,
+        edit: false
     }
 });
 map.addControl(drawControl);
@@ -62,7 +63,8 @@ map.on(L.Draw.Event.CREATED, function (e) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    circle: JSON.stringify(GeoJSONLayer)
+                    circle: JSON.stringify(GeoJSONLayer),
+                    radius: layer.getRadius()
                 })
             });
         } else
@@ -82,10 +84,47 @@ map.on(L.Draw.Event.CREATED, function (e) {
     drawnItems.addLayer(layer);
 });
 
-map.on(L.Draw.Event.EDITED, function (e) {
-
-});
-
 map.on(L.Draw.Event.DELETED, function (e) {
-
+    var layers = e.layers;
+    console.log(e);
+    console.log(layers);
+    layers.eachLayer(layer => {
+        if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+            var GeoJSONLayer = layer.toGeoJSON();
+            fetch(`${serverIp}/deletepolyline`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    polyline: JSON.stringify(GeoJSONLayer)
+                })
+            });
+        } else
+            if (layer instanceof L.Circle) {
+                var GeoJSONLayer = layer.toGeoJSON();
+                fetch(`${serverIp}/deletecircle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        circle: JSON.stringify(GeoJSONLayer),
+                        radius: layer.getRadius()
+                    })
+                });
+            } else
+                if (layer instanceof L.Marker) {
+                    var GeoJSONLayer = layer.toGeoJSON();
+                    fetch(`${serverIp}/deletemarker`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            marker: JSON.stringify(GeoJSONLayer)
+                        })
+                    });
+                }
+    });
 });
