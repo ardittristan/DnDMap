@@ -1,12 +1,5 @@
 node_modules
-<<<<<<< HEAD
 Client/map/*
 !Client/map/3
 package-lock.json
 *.db
-=======
-map/*
-!map/3
-package-lock.json
-config.json
->>>>>>> ac70e15cc0fcfe9b12fc2a19c001f80927ec6f13
