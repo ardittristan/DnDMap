@@ -25,6 +25,16 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
             console.error(err.message);
         }
     });
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("GeoJSON" TEXT NOT NULL)`, function (err) {
+        if (err) {
+            console.error(err.message);
+        }
+    });
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Marker" ("GeoJSON" TEXT NOT NULL)`, function (err) {
+        if (err) {
+            console.error(err.message);
+        }
+    });
 });
 
 app.post('/polyline', function (req, res) {
@@ -34,6 +44,24 @@ app.post('/polyline', function (req, res) {
     var input = req.body;
     // insert
     db.run(/*sql*/`INSERT INTO PolyLine VALUES (?)`, [input['polyline']]);
+    res.end('Success');
+});
+app.post('/circle', function (req, res) {
+    console.log("fetched");
+    // get sent data
+    console.log(req.body);
+    var input = req.body;
+    // insert
+    db.run(/*sql*/`INSERT INTO Circle VALUES (?)`, [input['circle']]);
+    res.end('Success');
+});
+app.post('/marker', function (req, res) {
+    console.log("fetched");
+    // get sent data
+    console.log(req.body);
+    var input = req.body;
+    // insert
+    db.run(/*sql*/`INSERT INTO Marker VALUES (?)`, [input['marker']]);
     res.end('Success');
 });
 

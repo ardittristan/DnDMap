@@ -3,7 +3,7 @@ const L = require('leaflet');
 require('leaflet-draw');
 
 // server ip
-var serverIp = "http://127.0.0.1:3333"
+var serverIp = "http://127.0.0.1:3333";
 
 
 // Initialize the map
@@ -25,12 +25,19 @@ L.tileLayer('./map/{z}/{x}/{y}.png', {
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 var drawControl = new L.Control.Draw({
+    draw: {
+        polygon: false,
+        rectangle: false,
+        circlemarker: false
+    },
     edit: {
         featureGroup: drawnItems
     }
 });
 map.addControl(drawControl);
 
+
+//* on creation of drawing
 map.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
@@ -46,7 +53,31 @@ map.on(L.Draw.Event.CREATED, function (e) {
                 polyline: JSON.stringify(GeoJSONLayer)
             })
         });
-    }
+    } else
+        if (type === "circle") {
+            var GeoJSONLayer = layer.toGeoJSON();
+            fetch(`${serverIp}/circle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    circle: JSON.stringify(GeoJSONLayer)
+                })
+            });
+        } else
+            if (type === "marker") {
+                var GeoJSONLayer = layer.toGeoJSON();
+                fetch(`${serverIp}/marker`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        marker: JSON.stringify(GeoJSONLayer)
+                    })
+                });
+            }
 
     drawnItems.addLayer(layer);
 });
