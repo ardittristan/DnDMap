@@ -1,3 +1,5 @@
 node_modules
-map
+map/*
+!map/3
 package-lock.json
+config.json
