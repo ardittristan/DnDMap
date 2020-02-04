@@ -37,8 +37,99 @@ var drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
+//! create old objects on page load
+setTimeout(fetchOldMarkers, 1000);
+async function fetchOldMarkers() {
+    //* fetch polylines
+    fetch(`${serverIp}/fetchpolyline`)
+    .then(async function(response) {
+        var responseJSON = await response.json()
+        var array = responseJSON.polyline
+        if (array.length != 0) {
+            array.forEach(element => {
+                elementArray = JSON.parse(element)
+                L.polyline(elementArray.geometry.coordinates, {
+                    allowIntersection: true,
+                    repeatMode: false,
+                    drawError: {
+                        color: '#b00b00',
+                        timeout: 2500
+                    },
+                    icon: new L.DivIcon({
+                        iconSize: new L.Point(8, 8),
+                        className: 'leaflet-div-icon leaflet-editing-icon'
+                    }),
+                    touchIcon: new L.DivIcon({
+                        iconSize: new L.Point(20, 20),
+                        className: 'leaflet-div-icon leaflet-editing-icon leaflet-touch-icon'
+                    }),
+                    guidelineDistance: 20,
+                    maxGuideLineLength: 4000,
+                    shapeOptions: {
+                        stroke: true,
+                        color: '#3388ff',
+                        weight: 4,
+                        opacity: 0.5,
+                        fill: false,
+                        clickable: true
+                    },
+                    metric: true,
+                    feet: true,
+                    nautic: false,
+                    showLength: true,
+                    zIndexOffset: 2000,
+                    factor: 1,
+                    maxPoints: 0
+                }).addTo(drawnItems);
+            });
+        }
+    });
+    //* fetch circles
+    fetch(`${serverIp}/fetchcircle`).
+    then(async function(response) {
+        var responseJSON = await response.json()
+        var array = responseJSON.circle
+        if (array.length != 0) {
+            array.forEach(async element => {
+                var geojson = await JSON.parse(element.geojson);
+                L.circle(geojson.geometry.coordinates, element.radius, {
+                    shapeOptions: {
+                        stroke: true,
+                        color: '#3388ff',
+                        weight: 4,
+                        opacity: 0.5,
+                        fill: true,
+                        fillColor: null,
+                        fillOpacity: 0.2,
+                        clickable: true
+                    },
+                    showRadius: true,
+                    metric: true,
+                    feet: true,
+                    nautic: false
+                }).addTo(drawnItems);
+            });
+        }
+    });
+    //* fetch markers
+    fetch(`${serverIp}/fetchmarker`)
+    .then(async function(response) {
+        var responseJSON = await response.json()
+        var array = responseJSON.marker
+        if (array.length != 0) {
+            array.forEach(element => {
+                elementArray = JSON.parse(element)
+                L.marker(elementArray.geometry.coordinates, {
+                    icon: new L.Icon.Default(),
+                    repeatMode: false,
+                    zIndexOffset: 2000
+                }).addTo(drawnItems);
+            });
+        }
+    });
+}
 
-//* on creation of drawing
+//! on creation of drawing
 map.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
@@ -84,10 +175,9 @@ map.on(L.Draw.Event.CREATED, function (e) {
     drawnItems.addLayer(layer);
 });
 
+//! on deletion of drawing
 map.on(L.Draw.Event.DELETED, function (e) {
     var layers = e.layers;
-    console.log(e);
-    console.log(layers);
     layers.eachLayer(layer => {
         if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
             var GeoJSONLayer = layer.toGeoJSON();
