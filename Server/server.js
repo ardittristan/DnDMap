@@ -1,3 +1,4 @@
+//! init dependencies
 const sqlite3 = require('sqlite3');
 const { existsSync, mkdirSync } = require('fs');
 const express = require('express');
@@ -5,6 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
 
+//* add cors and bodyparser to express
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -19,17 +21,19 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
         console.error(err.message);
     }
     console.log("connected to Reminder db");
-    //* creates table for reminders
+    //* creates table for polylines
     db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "PolyLine" ("LatLng" TEXT NOT NULL, "Text" TEXT)`, function (err) {
         if (err) {
             console.error(err.message);
         }
     });
+    //* creates table for circles
     db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("LatLng" TEXT NOT NULL, "Radius" INTEGER NOT NULL, "Text" TEXT)`, function (err) {
         if (err) {
             console.error(err.message);
         }
     });
+    //* creates table for markers
     db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Marker" ("LatLng" TEXT NOT NULL)`, function (err) {
         if (err) {
             console.error(err.message);
@@ -37,7 +41,10 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
     });
 });
 
+
 //! Receive creation notices
+
+//* when polyline created
 app.post('/polyline', function (req, res) {
     // get sent data
     var input = req.body;
@@ -45,6 +52,8 @@ app.post('/polyline', function (req, res) {
     db.run(/*sql*/`INSERT INTO PolyLine VALUES (?, ?)`, [input['latlng'], null]);
     res.end('Success');
 });
+
+//* when circle created
 app.post('/circle', function (req, res) {
     // get sent data
     var input = req.body;
@@ -52,6 +61,8 @@ app.post('/circle', function (req, res) {
     db.run(/*sql*/`INSERT INTO Circle VALUES (?, ?, ?)`, [input['latlng'], input['radius'], null]);
     res.end('Success');
 });
+
+//* when marker created
 app.post('/marker', function (req, res) {
     // get sent data
     var input = req.body;
@@ -62,6 +73,8 @@ app.post('/marker', function (req, res) {
 
 
 //! Receive deletion notices
+
+//* when polyline deleted
 app.post('/deletepolyline', async function (req, res) {
     // get sent data
     var input = req.body;
@@ -79,6 +92,7 @@ app.post('/deletepolyline', async function (req, res) {
                 var same = true;
                 var rowArray = await JSON.parse(row.LatLng);
                 rowArray.forEach(function (arrayRow, index) {
+                    // check if input is the same as current row
                     var arrayInput = inputObj[index];
                     var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                     var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
@@ -89,6 +103,7 @@ app.post('/deletepolyline', async function (req, res) {
                     }
                 });
                 if (same) {
+                    // deletes the row if previous statement succeeded
                     db.run(/*sql*/`DELETE FROM PolyLine WHERE _rowid_ = (?)`, [row.id]);
                     res.end('Success');
                 }
@@ -97,6 +112,7 @@ app.post('/deletepolyline', async function (req, res) {
     });
 });
 
+//* when circle deleted
 app.post('/deletecircle', async function (req, res) {
     // get sent data
     var input = req.body;
@@ -110,6 +126,7 @@ app.post('/deletecircle', async function (req, res) {
         }
         else {
             rows.forEach(async function (row) {
+                // check if input is the same as current row
                 var arrayInput = await JSON.parse(input['latlng']);
                 var arrayRow = await JSON.parse(row.LatLng);
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
@@ -117,6 +134,7 @@ app.post('/deletecircle', async function (req, res) {
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
                 if (inputX === rowX && inputY === rowY) {
+                    // deletes the row if previous statement succeeded
                     db.run(/*sql*/`DELETE FROM Circle WHERE _rowid_ = (?)`, [row.id]);
                     res.end('Success');
                 }
@@ -124,6 +142,8 @@ app.post('/deletecircle', async function (req, res) {
         }
     });
 });
+
+//* when marker deleted
 app.post('/deletemarker', function (req, res) {
     // get sent data
     var input = req.body;
@@ -137,6 +157,7 @@ app.post('/deletemarker', function (req, res) {
         }
         else {
             rows.forEach(async function (row) {
+                // check if input is the same as current row
                 var arrayInput = await JSON.parse(input['latlng']);
                 var arrayRow = await JSON.parse(row.LatLng);
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
@@ -144,6 +165,7 @@ app.post('/deletemarker', function (req, res) {
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
                 if (inputX === rowX && inputY === rowY) {
+                    // deletes the row if previous statement succeeded
                     db.run(/*sql*/`DELETE FROM Marker WHERE _rowid_ = (?)`, [row.id]);
                     res.end('Success');
                 }
@@ -154,6 +176,8 @@ app.post('/deletemarker', function (req, res) {
 
 
 //! Load old objects
+
+//* when polyline fetched
 app.get('/fetchpolyline', function (_, res) {
     var output = { polyline: [] };
     let sql = /*sql*/`SELECT    LatLng,
@@ -166,7 +190,9 @@ app.get('/fetchpolyline', function (_, res) {
             res.end("Failure");
         }
         else {
+            // checks if there are any polylines
             if (rows.length != 0) {
+                // adds each row to output
                 rows.forEach(function (row) {
                     var text = ""
                     if (!(row.Text === null || row.Text === "")) {
@@ -185,6 +211,7 @@ app.get('/fetchpolyline', function (_, res) {
     });
 });
 
+//* when circle fetched
 app.get('/fetchcircle', function (_, res) {
     var output = { circle: [] };
     let sql = /*sql*/`SELECT    LatLng,
@@ -198,7 +225,9 @@ app.get('/fetchcircle', function (_, res) {
             res.end("Failure");
         }
         else {
+            // checks if there are any circles
             if (rows.length != 0) {
+                // adds each row to output
                 rows.forEach(function (row) {
                     var text = ""
                     if (!(row.Text === null || row.Text === "")) {
@@ -217,6 +246,7 @@ app.get('/fetchcircle', function (_, res) {
     });
 });
 
+//* when marker fetched
 app.get('/fetchmarker', function (_, res) {
     var output = { marker: [] };
     let sql = /*sql*/`SELECT    LatLng
@@ -228,7 +258,9 @@ app.get('/fetchmarker', function (_, res) {
             res.end("Failure");
         }
         else {
+            // check if there are any markers
             if (rows.length != 0) {
+                // adds each marker to output
                 rows.forEach(function (row) {
                     output.marker.push(row.LatLng);
                 });
@@ -243,7 +275,10 @@ app.get('/fetchmarker', function (_, res) {
     });
 });
 
+
 //! editing of objects
+
+//* when polyline edited
 app.post('/editpolyline', async function (req, res) {
     // get sent data
     var input = req.body;
@@ -261,6 +296,7 @@ app.post('/editpolyline', async function (req, res) {
                 var same = true;
                 var rowArray = await JSON.parse(row.LatLng);
                 rowArray.forEach(function (arrayRow, index) {
+                    // check if input is the same as current row
                     var arrayInput = inputObj[index];
                     var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                     var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
@@ -271,6 +307,7 @@ app.post('/editpolyline', async function (req, res) {
                     }
                 });
                 if (same) {
+                    // deletes the row if previous statement succeeded
                     db.run(/*sql*/`UPDATE PolyLine SET "Text" = (?) WHERE _rowid_ = (?)`, [input['text'], row.id]);
                     res.end('Success');
                 }
@@ -279,6 +316,7 @@ app.post('/editpolyline', async function (req, res) {
     });
 });
 
+//* when circle edited
 app.post('/editcircle', async function (req, res) {
     // get sent data
     var input = req.body;
@@ -292,6 +330,7 @@ app.post('/editcircle', async function (req, res) {
         }
         else {
             rows.forEach(async function (row) {
+                // check if input is the same as current row
                 var arrayInput = await JSON.parse(input['latlng']);
                 var arrayRow = await JSON.parse(row.LatLng);
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
@@ -299,6 +338,7 @@ app.post('/editcircle', async function (req, res) {
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
                 if (inputX === rowX && inputY === rowY) {
+                    // deletes the row if previous statement succeeded
                     db.run(/*sql*/`UPDATE Circle SET "Text" = (?) WHERE _rowid_ = (?)`, [input['text'], row.id]);
                     res.end('Success');
                 }
@@ -307,4 +347,6 @@ app.post('/editcircle', async function (req, res) {
     });
 });
 
+
+//! starts listening on port 3333
 app.listen(3333, function () { console.log("listening on 3333"); });

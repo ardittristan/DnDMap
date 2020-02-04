@@ -1,11 +1,11 @@
-// Initialize leaflet.js
+//! initialize requirements
 var L = require('leaflet');
 require('leaflet-draw');
 require('./libs/Leaflet.StyleEditor.min');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
-// server ip
+//* set server ip
 var serverIp = config.ip;
 
 var img = [
@@ -17,6 +17,7 @@ var img = [
 
 var map = L.map('map');
 
+//* lay the coordinates out
 var rc = new L.RasterCoords(map, img);
 map.setMaxZoom(rc.zoomLevel());
 map.setView(rc.unproject([img[0], img[1]]), 3);
@@ -71,6 +72,7 @@ async function fetchOldMarkers() {
                     if (!(elementArray.text == null || elementArray === "")) {
                         popupContent = elementArray.text;
                     }
+                    // create polyline
                     var layer = L.polyline(coordinates, {
                         allowIntersection: true,
                         repeatMode: false,
@@ -104,6 +106,7 @@ async function fetchOldMarkers() {
                         factor: 1,
                         maxPoints: 0
                     });
+                    // add popup if exists
                     layer.bindPopup(popupContent);
                     layer.addTo(drawnItems);
                 });
@@ -121,6 +124,7 @@ async function fetchOldMarkers() {
                     if (!(element.text === null || element.text === "")) {
                         popupContent = element.text;
                     }
+                    // add circle
                     var layer = L.circle(rc.unproject(coordinates), element.radius, {
                         shapeOptions: {
                             stroke: true,
@@ -137,6 +141,7 @@ async function fetchOldMarkers() {
                         feet: true,
                         nautic: false
                     });
+                    // add popup if exists
                     layer.bindPopup(popupContent);
                     layer.addTo(drawnItems);
                 });
@@ -150,11 +155,13 @@ async function fetchOldMarkers() {
             if (array.length != 0) {
                 array.forEach(async element => {
                     coordinates = await JSON.parse(element);
+                    // add marker
                     L.marker(rc.unproject(coordinates), {
                         icon: new L.Icon.Default(),
                         repeatMode: false,
                         zIndexOffset: 2000
                     }).addTo(drawnItems);
+                    //? doesn't allow for popups unless I do something fucky, idk
                 });
             }
         });
@@ -165,6 +172,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
 
+        // if polyline send to server
     if (type === "polyline") {
         var latlng = [];
         layer.getLatLngs().forEach(array => {
@@ -180,6 +188,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
             })
         });
     } else
+        // if circle send to server
         if (type === "circle") {
             var coordinates = rc.project(layer.getLatLng());
             fetch(`${serverIp}/circle`, {
@@ -193,6 +202,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
                 })
             });
         } else
+            // if marker send to server
             if (type === "marker") {
                 var coordinates = rc.project(layer.getLatLng());
                 fetch(`${serverIp}/marker`, {
@@ -205,7 +215,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
                     })
                 });
             }
-
+    // add layer to the editable layer
     drawnItems.addLayer(layer);
 });
 
@@ -213,8 +223,10 @@ map.on(L.Draw.Event.CREATED, function (e) {
 map.on(L.Draw.Event.DELETED, function (e) {
     var layers = e.layers;
     layers.eachLayer(layer => {
+        // check if it's a polyline
         if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
             var latlng = [];
+            // get all polyline coordinates
             layer.getLatLngs().forEach(array => {
                 latlng.push(rc.project(array));
             });
@@ -228,6 +240,7 @@ map.on(L.Draw.Event.DELETED, function (e) {
                 })
             });
         } else
+            // check if it's a circle
             if (layer instanceof L.Circle) {
                 var coordinates = rc.project(layer.getLatLng());
                 fetch(`${serverIp}/deletecircle`, {
@@ -240,6 +253,7 @@ map.on(L.Draw.Event.DELETED, function (e) {
                     })
                 });
             } else
+                // check if it's a marker
                 if (layer instanceof L.Marker) {
                     var coordinates = rc.project(layer.getLatLng());
                     fetch(`${serverIp}/deletemarker`, {
@@ -257,9 +271,12 @@ map.on(L.Draw.Event.DELETED, function (e) {
 
 //! on editing of marker
 map.on('styleeditor:changed', function (layer) {
+    // check if it is not a circle
     if (layer.options.radius === undefined || layer.options.radius === null || layer.options.radius === 0) {
+        // check if it contains any text
         if (!(layer.options.popupContent === null || layer.options.popupContent === "")) {
             var latlng = [];
+            // get all polyline coordinates
             layer.getLatLngs().forEach(array => {
                 latlng.push(rc.project(array));
             });
@@ -276,6 +293,7 @@ map.on('styleeditor:changed', function (layer) {
         }
     }
     else {
+        // check if it contains any text
         if (!(layer.options.popupContent === null || layer.options.popupContent === "")) {
             var coordinates = rc.project(layer.getLatLng());
             fetch(`${serverIp}/editcircle`, {
