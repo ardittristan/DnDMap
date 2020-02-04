@@ -1,17 +1,19 @@
 // Initialize leaflet.js
 var L = require('leaflet');
 require('leaflet-draw');
+require('./libs/Leaflet.StyleEditor.min');
+var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
 // server ip
-var serverIp = "http://127.0.0.1:3333";
+var serverIp = config.ip;
 
 var img = [
     34862,
     30281
 ];
 
-// Initialize the map
+//* Initialize the map
 
 var map = L.map('map');
 
@@ -24,6 +26,16 @@ L.tileLayer('./tiles/{z}/{x}/{y}.png', {
     bounds: [[0, -180], [86, 12]],
     noWrap: true
 }).addTo(map);
+
+//* add toolbars
+let styleEditor = L.control.styleEditor({
+    position: 'topleft',
+    useGrouping: false,
+    colorRamp: [],
+    openOnLeafletDraw: false,
+    ignoreLayerTypes: ["Marker"]
+});
+map.addControl(styleEditor);
 
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
@@ -52,10 +64,14 @@ async function fetchOldMarkers() {
                 array.forEach(async element => {
                     var coordinates = [];
                     elementArray = await JSON.parse(element);
-                    elementArray.forEach(inputCoordinate => {
+                    elementArray.coordinates.forEach(inputCoordinate => {
                         coordinates.push(rc.unproject(inputCoordinate));
                     });
-                    L.polyline(coordinates, {
+                    var popupContent = null;
+                    if (!(elementArray.text == null || elementArray === "")) {
+                        popupContent = elementArray.text;
+                    }
+                    var layer = L.polyline(coordinates, {
                         allowIntersection: true,
                         repeatMode: false,
                         drawError: {
@@ -76,7 +92,7 @@ async function fetchOldMarkers() {
                             stroke: true,
                             color: '#3388ff',
                             weight: 4,
-                            opacity: 0.5,
+                            opacity: 0.65,
                             fill: false,
                             clickable: true
                         },
@@ -87,7 +103,9 @@ async function fetchOldMarkers() {
                         zIndexOffset: 2000,
                         factor: 1,
                         maxPoints: 0
-                    }).addTo(drawnItems);
+                    });
+                    layer.bindPopup(popupContent);
+                    layer.addTo(drawnItems);
                 });
             }
         });
@@ -99,22 +117,28 @@ async function fetchOldMarkers() {
             if (array.length != 0) {
                 array.forEach(async element => {
                     var coordinates = await JSON.parse(element.latlng);
-                    L.circle(rc.unproject(coordinates), element.radius, {
+                    var popupContent = null;
+                    if (!(element.text === null || element.text === "")) {
+                        popupContent = element.text;
+                    }
+                    var layer = L.circle(rc.unproject(coordinates), element.radius, {
                         shapeOptions: {
                             stroke: true,
                             color: '#3388ff',
                             weight: 4,
-                            opacity: 0.5,
+                            opacity: 0.65,
                             fill: true,
                             fillColor: null,
-                            fillOpacity: 0.2,
+                            fillOpacity: 0.3,
                             clickable: true
                         },
                         showRadius: true,
                         metric: true,
                         feet: true,
                         nautic: false
-                    }).addTo(drawnItems);
+                    });
+                    layer.bindPopup(popupContent);
+                    layer.addTo(drawnItems);
                 });
             }
         });
@@ -194,8 +218,6 @@ map.on(L.Draw.Event.DELETED, function (e) {
             layer.getLatLngs().forEach(array => {
                 latlng.push(rc.project(array));
             });
-            console.log("fetch");
-            console.log(JSON.stringify(latlng));
             fetch(`${serverIp}/deletepolyline`, {
                 method: 'POST',
                 headers: {
@@ -214,8 +236,7 @@ map.on(L.Draw.Event.DELETED, function (e) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        latlng: JSON.stringify(coordinates),
-                        radius: layer.getRadius()
+                        latlng: JSON.stringify(coordinates)
                     })
                 });
             } else
@@ -232,4 +253,41 @@ map.on(L.Draw.Event.DELETED, function (e) {
                     });
                 }
     });
+});
+
+//! on editing of marker
+map.on('styleeditor:changed', function (layer) {
+    if (layer.options.radius === undefined || layer.options.radius === null || layer.options.radius === 0) {
+        if (!(layer.options.popupContent === null || layer.options.popupContent === "")) {
+            var latlng = [];
+            layer.getLatLngs().forEach(array => {
+                latlng.push(rc.project(array));
+            });
+            fetch(`${serverIp}/editpolyline`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latlng: JSON.stringify(latlng),
+                    text: layer.options.popupContent
+                })
+            });
+        }
+    }
+    else {
+        if (!(layer.options.popupContent === null || layer.options.popupContent === "")) {
+            var coordinates = rc.project(layer.getLatLng());
+            fetch(`${serverIp}/editcircle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latlng: JSON.stringify(coordinates),
+                    text: layer.options.popupContent
+                })
+            });
+        }
+    }
 });

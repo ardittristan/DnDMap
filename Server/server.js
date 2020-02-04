@@ -20,12 +20,12 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
     }
     console.log("connected to Reminder db");
     //* creates table for reminders
-    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "PolyLine" ("LatLng" TEXT NOT NULL)`, function (err) {
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "PolyLine" ("LatLng" TEXT NOT NULL, "Text" TEXT)`, function (err) {
         if (err) {
             console.error(err.message);
         }
     });
-    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("LatLng" TEXT NOT NULL, "Radius" INTEGER NOT NULL)`, function (err) {
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "Circle" ("LatLng" TEXT NOT NULL, "Radius" INTEGER NOT NULL, "Text" TEXT)`, function (err) {
         if (err) {
             console.error(err.message);
         }
@@ -39,23 +39,20 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
 
 //! Receive creation notices
 app.post('/polyline', function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     // insert
-    db.run(/*sql*/`INSERT INTO PolyLine VALUES (?)`, [input['latlng']]);
+    db.run(/*sql*/`INSERT INTO PolyLine VALUES (?, ?)`, [input['latlng'], null]);
     res.end('Success');
 });
 app.post('/circle', function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     // insert
-    db.run(/*sql*/`INSERT INTO Circle VALUES (?, ?)`, [input['latlng'], input['radius']]);
+    db.run(/*sql*/`INSERT INTO Circle VALUES (?, ?, ?)`, [input['latlng'], input['radius'], null]);
     res.end('Success');
 });
 app.post('/marker', function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     // insert
@@ -66,7 +63,6 @@ app.post('/marker', function (req, res) {
 
 //! Receive deletion notices
 app.post('/deletepolyline', async function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     let sql = /*sql*/`SELECT    LatLng,
@@ -76,7 +72,6 @@ app.post('/deletepolyline', async function (req, res) {
     db.all(sql, [], async (err, rows) => {
         if (err) {
             res.end('Failure');
-            console.log("fail");
         }
         else {
             var inputObj = await JSON.parse(input['latlng']);
@@ -103,30 +98,25 @@ app.post('/deletepolyline', async function (req, res) {
 });
 
 app.post('/deletecircle', async function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     let sql = /*sql*/`SELECT    LatLng,
-                                Radius,
                                 _rowid_ id
                         FROM Circle
                         ORDER BY _rowid_`;
     db.all(sql, [], async (err, rows) => {
         if (err) {
             res.end('Failure');
-            console.log("fail");
         }
         else {
             rows.forEach(async function (row) {
                 var arrayInput = await JSON.parse(input['latlng']);
                 var arrayRow = await JSON.parse(row.LatLng);
-                var inputRadius = await JSON.parse(input['radius']);
-                var rowRadius = row.radius;
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                 var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
-                if (inputX === rowX && inputY === rowY && inputRadius == rowRadius) {
+                if (inputX === rowX && inputY === rowY) {
                     db.run(/*sql*/`DELETE FROM Circle WHERE _rowid_ = (?)`, [row.id]);
                     res.end('Success');
                 }
@@ -135,7 +125,6 @@ app.post('/deletecircle', async function (req, res) {
     });
 });
 app.post('/deletemarker', function (req, res) {
-    console.log("fetched");
     // get sent data
     var input = req.body;
     let sql = /*sql*/`SELECT    LatLng,
@@ -145,7 +134,6 @@ app.post('/deletemarker', function (req, res) {
     db.all(sql, [], async (err, rows) => {
         if (err) {
             res.end('Failure');
-            console.log("fail");
         }
         else {
             rows.forEach(async function (row) {
@@ -167,20 +155,24 @@ app.post('/deletemarker', function (req, res) {
 
 //! Load old objects
 app.get('/fetchpolyline', function (_, res) {
-    console.log("fetched");
     var output = { polyline: [] };
-    let sql = /*sql*/`SELECT    LatLng
+    let sql = /*sql*/`SELECT    LatLng,
+                                Text
                         FROM PolyLine
                         ORDER BY _rowid_`;
     db.all(sql, [], (err, rows) => {
         if (err) {
             res.send(JSON.stringify(output));
-            res.end("Success");
+            res.end("Failure");
         }
         else {
             if (rows.length != 0) {
                 rows.forEach(function (row) {
-                    output.polyline.push(row.LatLng);
+                    var text = ""
+                    if (!(row.Text === null || row.Text === "")) {
+                        text = row.Text
+                    }
+                    output.polyline.push({coordinates: row.LatLng, text: text});
                 });
                 res.send(JSON.stringify(output));
                 res.end("Success");
@@ -194,21 +186,25 @@ app.get('/fetchpolyline', function (_, res) {
 });
 
 app.get('/fetchcircle', function (_, res) {
-    console.log("fetched");
     var output = { circle: [] };
     let sql = /*sql*/`SELECT    LatLng,
-                                Radius
+                                Radius,
+                                Text
                         FROM Circle
                         ORDER BY _rowid_`;
     db.all(sql, [], (err, rows) => {
         if (err) {
             res.send(JSON.stringify(output));
-            res.end("Success");
+            res.end("Failure");
         }
         else {
             if (rows.length != 0) {
                 rows.forEach(function (row) {
-                    output.circle.push({ latlng: row.LatLng, radius: row.Radius });
+                    var text = ""
+                    if (!(row.Text === null || row.Text === "")) {
+                        text = row.Text
+                    }
+                    output.circle.push({ latlng: row.LatLng, radius: row.Radius, text: text });
                 });
                 res.send(JSON.stringify(output));
                 res.end("Success");
@@ -222,7 +218,6 @@ app.get('/fetchcircle', function (_, res) {
 });
 
 app.get('/fetchmarker', function (_, res) {
-    console.log("fetched");
     var output = { marker: [] };
     let sql = /*sql*/`SELECT    LatLng
                         FROM Marker
@@ -230,14 +225,13 @@ app.get('/fetchmarker', function (_, res) {
     db.all(sql, [], (err, rows) => {
         if (err) {
             res.send(JSON.stringify(output));
-            res.end("Success");
+            res.end("Failure");
         }
         else {
             if (rows.length != 0) {
                 rows.forEach(function (row) {
                     output.marker.push(row.LatLng);
                 });
-                console.log("send");
                 res.send(JSON.stringify(output));
                 res.end("Success");
             }
@@ -245,6 +239,70 @@ app.get('/fetchmarker', function (_, res) {
                 res.send(JSON.stringify(output));
                 res.end("Success");
             }
+        }
+    });
+});
+
+//! editing of objects
+app.post('/editpolyline', async function (req, res) {
+    // get sent data
+    var input = req.body;
+    let sql = /*sql*/`SELECT    LatLng,
+                                _rowid_ id
+                        FROM PolyLine
+                        ORDER BY _rowid_`;
+    db.all(sql, [], async (err, rows) => {
+        if (err) {
+            res.end('Failure');
+        }
+        else {
+            var inputObj = await JSON.parse(input['latlng']);
+            rows.forEach(async function (row) {
+                var same = true;
+                var rowArray = await JSON.parse(row.LatLng);
+                rowArray.forEach(function (arrayRow, index) {
+                    var arrayInput = inputObj[index];
+                    var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
+                    var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
+                    var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
+                    var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
+                    if (!(inputX === rowX && inputY === rowY)) {
+                        same = false;
+                    }
+                });
+                if (same) {
+                    db.run(/*sql*/`UPDATE PolyLine SET "Text" = (?) WHERE _rowid_ = (?)`, [input['text'], row.id]);
+                    res.end('Success');
+                }
+            });
+        }
+    });
+});
+
+app.post('/editcircle', async function (req, res) {
+    // get sent data
+    var input = req.body;
+    let sql = /*sql*/`SELECT    LatLng,
+                                _rowid_ id
+                        FROM Circle
+                        ORDER BY _rowid_`;
+    db.all(sql, [], async (err, rows) => {
+        if (err) {
+            res.end('Failure');
+        }
+        else {
+            rows.forEach(async function (row) {
+                var arrayInput = await JSON.parse(input['latlng']);
+                var arrayRow = await JSON.parse(row.LatLng);
+                var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
+                var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
+                var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
+                var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
+                if (inputX === rowX && inputY === rowY) {
+                    db.run(/*sql*/`UPDATE Circle SET "Text" = (?) WHERE _rowid_ = (?)`, [input['text'], row.id]);
+                    res.end('Success');
+                }
+            });
         }
     });
 });

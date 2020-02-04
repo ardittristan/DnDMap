@@ -3,3 +3,4 @@ Client/tiles/*
 !Client/tiles/3
 package-lock.json
 *.db
+config.json

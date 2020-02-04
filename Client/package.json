@@ -12,7 +12,8 @@
   "dependencies": {
     "leaflet": "^1.6.0",
     "leaflet-draw": "^1.0.4",
-    "leaflet-rastercoords": "^1.0.3"
+    "leaflet-rastercoords": "^1.0.3",
+    "leaflet-styleeditor": "=0.1.13"
   },
   "devDependencies": {
     "beefy": "^2.1.8",
