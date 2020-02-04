@@ -4,3 +4,4 @@ Client/tiles/*
 package-lock.json
 *.db
 config.json
+appbundle.js
