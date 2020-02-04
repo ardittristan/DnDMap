@@ -53,8 +53,8 @@ async function fetchOldMarkers() {
                     var coordinates = [];
                     elementArray = await JSON.parse(element);
                     elementArray.forEach(inputCoordinate => {
-                        coordinates.push(rc.unproject(inputCoordinate))
-                    })
+                        coordinates.push(rc.unproject(inputCoordinate));
+                    });
                     L.polyline(coordinates, {
                         allowIntersection: true,
                         repeatMode: false,
@@ -194,8 +194,8 @@ map.on(L.Draw.Event.DELETED, function (e) {
             layer.getLatLngs().forEach(array => {
                 latlng.push(rc.project(array));
             });
-            console.log("fetch")
-            console.log(JSON.stringify(latlng))
+            console.log("fetch");
+            console.log(JSON.stringify(latlng));
             fetch(`${serverIp}/deletepolyline`, {
                 method: 'POST',
                 headers: {

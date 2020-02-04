@@ -74,17 +74,17 @@ app.post('/deletepolyline', async function (req, res) {
                         FROM PolyLine
                         ORDER BY _rowid_`;
     db.all(sql, [], async (err, rows) => {
-        if(err) {
-            res.end('Failure')
-            console.log("fail")
+        if (err) {
+            res.end('Failure');
+            console.log("fail");
         }
         else {
-            var inputObj = await JSON.parse(input['latlng'])
-            rows.forEach(async function(row) {
+            var inputObj = await JSON.parse(input['latlng']);
+            rows.forEach(async function (row) {
                 var same = true;
-                var rowArray = await JSON.parse(row.LatLng)
-                rowArray.forEach(function(arrayRow, index) {
-                    var arrayInput = inputObj[index]
+                var rowArray = await JSON.parse(row.LatLng);
+                rowArray.forEach(function (arrayRow, index) {
+                    var arrayInput = inputObj[index];
                     var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                     var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
                     var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
@@ -92,14 +92,14 @@ app.post('/deletepolyline', async function (req, res) {
                     if (!(inputX === rowX && inputY === rowY)) {
                         same = false;
                     }
-                })
+                });
                 if (same) {
-                    db.run(/*sql*/`DELETE FROM PolyLine WHERE _rowid_ = (?)`, [row.id])
-                    res.end('Success')
+                    db.run(/*sql*/`DELETE FROM PolyLine WHERE _rowid_ = (?)`, [row.id]);
+                    res.end('Success');
                 }
-            })
+            });
         }
-    })
+    });
 });
 
 app.post('/deletecircle', async function (req, res) {
@@ -112,27 +112,27 @@ app.post('/deletecircle', async function (req, res) {
                         FROM Circle
                         ORDER BY _rowid_`;
     db.all(sql, [], async (err, rows) => {
-        if(err) {
-            res.end('Failure')
-            console.log("fail")
+        if (err) {
+            res.end('Failure');
+            console.log("fail");
         }
         else {
-            rows.forEach(async function(row) {
-                var arrayInput = await JSON.parse(input['latlng'])
-                var arrayRow = await JSON.parse(row.LatLng)
-                var inputRadius = await JSON.parse(input['radius'])
-                var rowRadius = row.radius
+            rows.forEach(async function (row) {
+                var arrayInput = await JSON.parse(input['latlng']);
+                var arrayRow = await JSON.parse(row.LatLng);
+                var inputRadius = await JSON.parse(input['radius']);
+                var rowRadius = row.radius;
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                 var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
                 if (inputX === rowX && inputY === rowY && inputRadius == rowRadius) {
-                    db.run(/*sql*/`DELETE FROM Circle WHERE _rowid_ = (?)`, [row.id])
-                    res.end('Success')
+                    db.run(/*sql*/`DELETE FROM Circle WHERE _rowid_ = (?)`, [row.id]);
+                    res.end('Success');
                 }
-            })
+            });
         }
-    })
+    });
 });
 app.post('/deletemarker', function (req, res) {
     console.log("fetched");
@@ -143,25 +143,25 @@ app.post('/deletemarker', function (req, res) {
                         FROM Marker
                         ORDER BY _rowid_`;
     db.all(sql, [], async (err, rows) => {
-        if(err) {
-            res.end('Failure')
-            console.log("fail")
+        if (err) {
+            res.end('Failure');
+            console.log("fail");
         }
         else {
-            rows.forEach(async function(row) {
-                var arrayInput = await JSON.parse(input['latlng'])
-                var arrayRow = await JSON.parse(row.LatLng)
+            rows.forEach(async function (row) {
+                var arrayInput = await JSON.parse(input['latlng']);
+                var arrayRow = await JSON.parse(row.LatLng);
                 var inputX = (Math.round(arrayInput.x * 10000000)) / 10000000;
                 var inputY = (Math.round(arrayInput.y * 10000000)) / 10000000;
                 var rowX = (Math.round(arrayRow.x * 10000000)) / 10000000;
                 var rowY = (Math.round(arrayRow.y * 10000000)) / 10000000;
                 if (inputX === rowX && inputY === rowY) {
-                    db.run(/*sql*/`DELETE FROM Marker WHERE _rowid_ = (?)`, [row.id])
-                    res.end('Success')
+                    db.run(/*sql*/`DELETE FROM Marker WHERE _rowid_ = (?)`, [row.id]);
+                    res.end('Success');
                 }
-            })
+            });
         }
-    })
+    });
 });
 
 
