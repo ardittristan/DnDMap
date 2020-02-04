@@ -21,7 +21,7 @@ map.setView(rc.unproject([img[0], img[1]]), 3)
 
 L.tileLayer('./tiles/{z}/{x}/{y}.png', {
     attribution: '',
-    bounds: [[0,-180], [34862, 12]],
+    bounds: [[0,-180], [86, 12]],
     noWrap: true
 }).addTo(map);
 
