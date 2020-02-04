@@ -1,5 +1,5 @@
 node_modules
-Client/map/*
-!Client/map/3
+Client/tiles/*
+!Client/tiles/3
 package-lock.json
 *.db

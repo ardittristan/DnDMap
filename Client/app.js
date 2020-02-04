@@ -1,24 +1,27 @@
 // Initialize leaflet.js
-const L = require('leaflet');
+var L = require('leaflet');
 require('leaflet-draw');
+L.RasterCoords = require('leaflet-rastercoords');
 
 // server ip
 var serverIp = "http://127.0.0.1:3333";
 
+var img = [
+    34862,
+    30281
+]
 
 // Initialize the map
-var mapMinZoom = 0;
-var mapMaxZoom = 8;
 
-var map = L.map('map', {
-    maxZoom: mapMaxZoom,
-    minZoom: mapMinZoom
-}).setView([-66, -76], 3);
+var map = L.map('map')
 
-L.tileLayer('./map/{z}/{x}/{y}.png', {
+var rc = new L.RasterCoords(map, img)
+map.setMaxZoom(rc.zoomLevel())
+map.setView(rc.unproject([img[0], img[1]]), 3)
+
+L.tileLayer('./tiles/{z}/{x}/{y}.png', {
     attribution: '',
-    tms: true,
-    bounds: [[0, -180], [-256, 27]],
+    bounds: [[0,-180], [34862, 12]],
     noWrap: true
 }).addTo(map);
 
