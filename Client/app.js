@@ -1,7 +1,7 @@
 //! initialize requirements
 var L = require('leaflet');
 require('leaflet-draw');
-require('./libs/Leaflet.StyleEditor.min');
+require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
@@ -171,7 +171,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
         layer = e.layer;
 
-        // if polyline send to server
+    // if polyline send to server
     if (type === "polyline") {
         var latlng = [];
         layer.getLatLngs().forEach(array => {
