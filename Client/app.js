@@ -64,13 +64,12 @@ async function fetchOldMarkers() {
             if (array.length != 0) {
                 array.forEach(async element => {
                     var coordinates = [];
-                    elementArray = await JSON.parse(element);
-                    elementArray.coordinates.forEach(inputCoordinate => {
+                    JSON.parse(element.coordinates).forEach(inputCoordinate => {
                         coordinates.push(rc.unproject(inputCoordinate));
                     });
                     var popupContent = null;
-                    if (!(elementArray.text == null || elementArray === "")) {
-                        popupContent = elementArray.text;
+                    if (!(element.text == null || element === "")) {
+                        popupContent = element.text;
                     }
                     // create polyline
                     var layer = L.polyline(coordinates, {
