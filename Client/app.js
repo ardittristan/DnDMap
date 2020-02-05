@@ -1,8 +1,9 @@
 //! initialize requirements
 var L = require('leaflet');
 require('leaflet-draw');
-require('leaflet-edgebuffer')
+require('leaflet-edgebuffer');
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
+require('./libs/Leaflet.Liveupdate/leaflet-liveupdate');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
@@ -31,6 +32,7 @@ L.tileLayer('./tiles/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 //* add toolbars
+// editor button
 let styleEditor = L.control.styleEditor({
     position: 'topleft',
     useGrouping: false,
@@ -46,8 +48,9 @@ map.addLayer(drawnItems);
 // remove stuff from toolbar
 L.EditToolbar.Delete.include({
     removeAllLayers: false
-})
+});
 
+// drawing
 var drawControl = new L.Control.Draw({
     draw: {
         polygon: false,
@@ -60,6 +63,20 @@ var drawControl = new L.Control.Draw({
     }
 });
 map.addControl(drawControl);
+
+// live updating
+L.control.liveupdate({
+    update_map: function () {
+        drawnItems.eachLayer(function (layer) {
+            layer.remove();
+        });
+        fetchOldMarkers();
+    },
+    position: 'bottomleft',
+    interval: '10000'
+}).addTo(map)
+    .startUpdating()
+    .toggleUpdating();
 
 //! create old objects on page load
 setTimeout(fetchOldMarkers, 100);
