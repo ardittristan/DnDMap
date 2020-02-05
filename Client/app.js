@@ -1,6 +1,7 @@
 //! initialize requirements
 var L = require('leaflet');
 require('leaflet-draw');
+require('leaflet-edgebuffer')
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
@@ -25,7 +26,8 @@ map.setView(rc.unproject([img[0], img[1]]), 3);
 L.tileLayer('./tiles/{z}/{x}/{y}.png', {
     attribution: '',
     bounds: [[0, -180], [86, 12]],
-    noWrap: true
+    noWrap: true,
+    edgeBufferTiles: 2
 }).addTo(map);
 
 //* add toolbars
