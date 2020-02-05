@@ -40,6 +40,12 @@ map.addControl(styleEditor);
 
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
+
+// remove stuff from toolbar
+L.EditToolbar.Delete.include({
+    removeAllLayers: false
+})
+
 var drawControl = new L.Control.Draw({
     draw: {
         polygon: false,
