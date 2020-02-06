@@ -118,9 +118,6 @@ L.control.liveupdate({
             layer.remove();
         });
         fetchOldMarkers();
-        if (toastCount) {
-            toastr.warning("Don't edit marker text while live update is on");
-        } else { toastCount = true; }
     },
     position: 'bottomright',
     interval: '10000'
