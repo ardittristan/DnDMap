@@ -97,7 +97,7 @@ L.control.liveupdate({
         });
         fetchOldMarkers();
     },
-    position: 'bottomleft',
+    position: 'bottomright',
     interval: '10000'
 }).addTo(map)
     .startUpdating()
