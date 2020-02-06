@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "beefy app.js:appbundle.js --live",
-    "bundle": "browserify app.js -o appbundle.js"
+    "bundle": "browserify app.js -o appbundle.js",
+    "update": "npm update --only=prod"
   },
   "author": "ardittristan",
   "license": "ISC",
