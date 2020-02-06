@@ -1,5 +1,5 @@
 .leaflet-control-liveupdate a {
-  background:#fff url(liveupdate.png) no-repeat 0 0;
+  background:#fff url(./liveupdate.png) no-repeat 0 0;
   background-size:26px 52px;
 }
 .leaflet-liveupdate-on .leaflet-control-liveupdate a {
