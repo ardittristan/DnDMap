@@ -111,13 +111,16 @@ L.Control.boxzoom({
 }).addTo(map);
 
 // live updating
+var toastCount = false;
 L.control.liveupdate({
     update_map: function () {
         drawnItems.eachLayer(function (layer) {
             layer.remove();
         });
         fetchOldMarkers();
-        toastr.warning("Don't edit marker text while live update is on");
+        if (toastCount) {
+            toastr.warning("Don't edit marker text while live update is on");
+        } else { toastCount = true; }
     },
     position: 'bottomright',
     interval: '10000'
