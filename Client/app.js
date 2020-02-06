@@ -24,11 +24,12 @@ var map = L.map('map');
 var rc = new L.RasterCoords(map, img);
 map.setMaxZoom(rc.zoomLevel());
 map.setView(rc.unproject([img[0], img[1]]), 3);
+map.setMaxBounds([[13.54, -180], [86, 11.5]])
 
 // map layer
 L.tileLayer('./tiles/{z}/{x}/{y}.png', {
     attribution: "Don't edit while live update is on",
-    bounds: [[0, -180], [86, 12]],
+    bounds: [[13.54, -180], [86, 11.5]],
     noWrap: true,
     edgeBufferTiles: 2,
     zIndexOffset: 1
@@ -36,7 +37,7 @@ L.tileLayer('./tiles/{z}/{x}/{y}.png', {
 
 // hex layer
 var hexLayer = L.tileLayer('./hexTiles/{z}/{x}/{y}.png', {
-    bounds: [[0, -180], [86, 12]],
+    bounds: [[13.54, -180], [86, 11.5]],
     noWrap: true,
     edgeBufferTiles: 2,
     zIndexOffset: 2,
