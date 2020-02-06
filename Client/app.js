@@ -3,6 +3,7 @@ var L = require('leaflet');
 require('leaflet-draw');
 require('leaflet-edgebuffer');
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
+require('leaflet.control.layers.tree');
 require('./libs/Leaflet.Liveupdate/leaflet-liveupdate');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
@@ -24,12 +25,23 @@ var rc = new L.RasterCoords(map, img);
 map.setMaxZoom(rc.zoomLevel());
 map.setView(rc.unproject([img[0], img[1]]), 3);
 
+// map layer
 L.tileLayer('./tiles/{z}/{x}/{y}.png', {
-    attribution: '',
+    attribution: "Don't edit while live update is on",
     bounds: [[0, -180], [86, 12]],
     noWrap: true,
-    edgeBufferTiles: 2
+    edgeBufferTiles: 2,
+    zIndexOffset: 1
 }).addTo(map);
+
+// hex layer
+var hexLayer = L.tileLayer('./hexTiles/{z}/{x}/{y}.png', {
+    bounds: [[0, -180], [86, 12]],
+    noWrap: true,
+    edgeBufferTiles: 2,
+    zIndexOffset: 2,
+    minZoom: 4
+});
 
 //* add toolbars
 // editor button
@@ -55,7 +67,13 @@ var drawControl = new L.Control.Draw({
     draw: {
         polygon: false,
         rectangle: false,
-        circlemarker: false
+        circlemarker: false,
+        polyline: {
+            showLength: false
+        },
+        circle: {
+            showRadius: false
+        }
     },
     edit: {
         featureGroup: drawnItems,
@@ -63,6 +81,13 @@ var drawControl = new L.Control.Draw({
     }
 });
 map.addControl(drawControl);
+
+// layer control
+var overlaysTree = [
+    {label: 'Markers', layer: drawnItems},
+    {label: 'Hex Layer', layer: hexLayer}
+]
+L.control.layers.tree([], overlaysTree, {collapsed: false}).addTo(map);
 
 // live updating
 L.control.liveupdate({
@@ -125,7 +150,7 @@ async function fetchOldMarkers() {
                         metric: true,
                         feet: true,
                         nautic: false,
-                        showLength: true,
+                        showLength: false,
                         zIndexOffset: 2000,
                         factor: 1,
                         maxPoints: 0
@@ -160,7 +185,7 @@ async function fetchOldMarkers() {
                             fillOpacity: 0.3,
                             clickable: true
                         },
-                        showRadius: true,
+                        showRadius: false,
                         metric: true,
                         feet: true,
                         nautic: false
@@ -332,4 +357,25 @@ map.on('styleeditor:changed', function (layer) {
             });
         }
     }
+});
+
+//* change grid opacity on zoom
+map.on('zoomend', function () {
+    switch (map.getZoom()) {
+        case 4:
+            hexLayer.setOpacity(1);
+            break;
+        case 5:
+            hexLayer.setOpacity(1);
+            break;
+        case 6:
+            hexLayer.setOpacity(0.8);
+            break;
+        case 7:
+            hexLayer.setOpacity(0.6);
+            break;
+        case 8:
+            hexLayer.setOpacity(0.4);
+            break;
+    };
 });

@@ -14,7 +14,8 @@
     "leaflet-draw": "^1.0.4",
     "leaflet-edgebuffer": "^1.0.6",
     "leaflet-rastercoords": "^1.0.3",
-    "leaflet-styleeditor": "^0.1.16"
+    "leaflet-styleeditor": "^0.1.16",
+    "leaflet.control.layers.tree": "^1.0.0"
   },
   "devDependencies": {
     "beefy": "^2.1.8",
