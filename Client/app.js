@@ -5,6 +5,7 @@ require('leaflet-edgebuffer');
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
 require('leaflet.control.layers.tree');
 require('./libs/Leaflet.Liveupdate/leaflet-liveupdate');
+require('./libs/L.Control.BoxZoom/leaflet-control-boxzoom');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
@@ -24,7 +25,7 @@ var map = L.map('map');
 var rc = new L.RasterCoords(map, img);
 map.setMaxZoom(rc.zoomLevel());
 map.setView(rc.unproject([img[0], img[1]]), 3);
-map.setMaxBounds([[13.54, -180], [86, 11.5]])
+map.setMaxBounds([[13.54, -180], [86, 11.5]]);
 
 // map layer
 L.tileLayer('./tiles/{z}/{x}/{y}.png', {
@@ -85,10 +86,15 @@ map.addControl(drawControl);
 
 // layer control
 var overlaysTree = [
-    {label: 'Markers', layer: drawnItems},
-    {label: 'Hex Layer', layer: hexLayer}
-]
-L.control.layers.tree([], overlaysTree, {collapsed: false}).addTo(map);
+    { label: 'Markers', layer: drawnItems },
+    { label: 'Hex Layer', layer: hexLayer }
+];
+L.control.layers.tree([], overlaysTree, { collapsed: false }).addTo(map);
+
+// zoom control
+L.Control.boxzoom({
+    position: 'topright'
+}).addTo(map);
 
 // live updating
 L.control.liveupdate({
