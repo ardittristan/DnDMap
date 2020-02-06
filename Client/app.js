@@ -6,6 +6,8 @@ require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.
 require('leaflet.control.layers.tree');
 require('./libs/Leaflet.Liveupdate/leaflet-liveupdate');
 require('./libs/L.Control.BoxZoom/leaflet-control-boxzoom');
+require('./libs/leaflet-button-control');
+require('./libs/leaflet-view-meta');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
 
@@ -44,6 +46,13 @@ var hexLayer = L.tileLayer('./hexTiles/{z}/{x}/{y}.png', {
     zIndexOffset: 2,
     minZoom: 4
 });
+
+// url layer
+var viewMeta = L.control.viewMeta({
+    position: 'bottomleft'
+}).addTo(map);
+viewMeta.parseParams();
+map.removeControl(viewMeta);
 
 //* add toolbars
 // editor button
@@ -109,6 +118,16 @@ L.control.liveupdate({
 }).addTo(map)
     .startUpdating()
     .toggleUpdating();
+
+// position share
+new L.Control.Button({
+    iconUrl: './img/share.png',
+    onClick: positionShareClick
+}).addTo(map);
+async function positionShareClick() {
+    viewMeta.addTo(map).update();
+    map.removeControl(viewMeta);
+}
 
 //! create old objects on page load
 setTimeout(fetchOldMarkers, 100);

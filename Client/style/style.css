@@ -5,3 +5,8 @@
 }
 .leaflet-layerstree-closed {display: none;}
 .leaflet-layerstree-opened {display: none;}
+.leaflet-buttons-control-text {display: none;}
+.leaflet-buttons-control-img {
+    width: 8%;
+    height: 8%;
+}
