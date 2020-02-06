@@ -1,12 +1,13 @@
 //! initialize requirements
 var L = require('leaflet');
+var toastr = require('toastr');
 require('leaflet-draw');
 require('leaflet-edgebuffer');
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
 require('leaflet.control.layers.tree');
+require('leaflet-easybutton');
 require('./libs/Leaflet.Liveupdate/leaflet-liveupdate');
 require('./libs/L.Control.BoxZoom/leaflet-control-boxzoom');
-require('./libs/leaflet-button-control');
 require('./libs/leaflet-view-meta');
 var config = require('./config/config.json');
 L.RasterCoords = require('leaflet-rastercoords');
@@ -73,6 +74,10 @@ L.EditToolbar.Delete.include({
     removeAllLayers: false
 });
 
+L.Control.EasyButton.mergeOptions({
+    position: 'bottomleft'
+});
+
 // drawing
 var drawControl = new L.Control.Draw({
     draw: {
@@ -112,6 +117,7 @@ L.control.liveupdate({
             layer.remove();
         });
         fetchOldMarkers();
+        toastr.warning("Don't edit marker text while live update is on");
     },
     position: 'bottomright',
     interval: '10000'
@@ -120,14 +126,11 @@ L.control.liveupdate({
     .toggleUpdating();
 
 // position share
-new L.Control.Button({
-    iconUrl: './img/share.png',
-    onClick: positionShareClick
-}).addTo(map);
-async function positionShareClick() {
+L.easyButton('fa-link', function () {
     viewMeta.addTo(map).update();
     map.removeControl(viewMeta);
-}
+    toastr.info('Copy link from url to share current map position');
+}, 'Get link of current position').addTo(map);
 
 //! create old objects on page load
 setTimeout(fetchOldMarkers, 100);
