@@ -10,3 +10,7 @@
     width: 8%;
     height: 8%;
 }
+span.leaflet-styleeditor-input-span {display: none;}
+.leaflet-styleeditor-stroke {display: none;}
+.leaflet-styleeditor-colorpicker {display: none;}
+input.leaflet-styleeditor-input {display: none;}
