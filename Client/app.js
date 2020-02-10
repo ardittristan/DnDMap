@@ -48,6 +48,14 @@ var hexLayer = L.tileLayer('./hexTiles/{z}/{x}/{y}.png', {
     minZoom: 4
 });
 
+// color layer
+var colorLayer = L.tileLayer('./colorOverlay/{z}/{x}/{y}.png', {
+    bounds: [[13.54, -180], [86, 11.5]],
+    noWrap: true,
+    edgeBufferTiles: 2,
+    zIndexOffset: 3
+});
+
 // url layer
 var viewMeta = L.control.viewMeta({
     position: 'bottomleft'
@@ -101,7 +109,8 @@ map.addControl(drawControl);
 // layer control
 var overlaysTree = [
     { label: 'Markers', layer: drawnItems },
-    { label: 'Hex Layer', layer: hexLayer }
+    { label: 'Hex Layer', layer: hexLayer },
+    { label: 'Color Overlay', layer: colorLayer }
 ];
 L.control.layers.tree([], overlaysTree, { collapsed: false }).addTo(map);
 
@@ -111,7 +120,6 @@ L.Control.boxzoom({
 }).addTo(map);
 
 // live updating
-var toastCount = false;
 L.control.liveupdate({
     update_map: function () {
         drawnItems.eachLayer(function (layer) {

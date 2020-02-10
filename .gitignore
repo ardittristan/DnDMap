@@ -3,6 +3,8 @@ Client/tiles/*
 !Client/tiles/3
 Client/hexTiles/*
 !Client/hexTiles/4
+Client/colorOverlay/*
+!Client/colorOverlay/3
 package-lock.json
 *.db
 config.json
