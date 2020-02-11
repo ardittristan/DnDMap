@@ -39,6 +39,12 @@ let db = new sqlite3.Database("./db/database.db", sqlite3.OPEN_READWRITE | sqlit
             console.error(err.message);
         }
     });
+    //* creates table for map text markers
+    db.run(/*sql*/`CREATE TABLE IF NOT EXISTS "TextOverlay" ("Name" TEXT, "LatLng" TEXT NOT NULL, "Image" TEXT NOT NULL)`, function (err) {
+        if (err) {
+            console.error(err.message);
+        }
+    });
 });
 
 
@@ -194,11 +200,11 @@ app.get('/fetchpolyline', function (_, res) {
             if (rows.length != 0) {
                 // adds each row to output
                 rows.forEach(function (row) {
-                    var text = ""
+                    var text = "";
                     if (!(row.Text === null || row.Text === "")) {
-                        text = row.Text
+                        text = row.Text;
                     }
-                    output.polyline.push({coordinates: row.LatLng, text: text});
+                    output.polyline.push({ coordinates: row.LatLng, text: text });
                 });
                 res.send(JSON.stringify(output));
                 res.end("Success");
@@ -229,9 +235,9 @@ app.get('/fetchcircle', function (_, res) {
             if (rows.length != 0) {
                 // adds each row to output
                 rows.forEach(function (row) {
-                    var text = ""
+                    var text = "";
                     if (!(row.Text === null || row.Text === "")) {
-                        text = row.Text
+                        text = row.Text;
                     }
                     output.circle.push({ latlng: row.LatLng, radius: row.Radius, text: text });
                 });
@@ -347,6 +353,45 @@ app.post('/editcircle', async function (req, res) {
     });
 });
 
+//! text overlays
+//* receive new text
+app.post('/addtext', async function (req, res) {
+    // get sent data
+    var input = req.body;
+    // insert
+    db.run(/*sql*/`INSERT INTO TextOverlay VALUES (?, ?, ?)`, [input['name'], input['latlng'], input['image']]);
+    res.end('Success');
+});
+
+//* when text fetched
+app.get('/fetchtext', function (_, res) {
+    var output = { text: [] };
+    let sql = /*sql*/`SELECT    LatLng,
+                                Image
+                        FROM TextOverlay
+                        ORDER BY _rowid_`;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.send(JSON.stringify(output));
+            res.end("Failure");
+        }
+        else {
+            // checks if there are any texts
+            if (rows.length != 0) {
+                // adds each row to output
+                rows.forEach(function (row) {
+                    output.text.push({ latlng: row.LatLng, image: row.Image });
+                });
+                res.send(JSON.stringify(output));
+                res.end("Success");
+            }
+            else {
+                res.send(JSON.stringify(output));
+                res.end("Success");
+            }
+        }
+    });
+});
 
 //! starts listening on port 3333
 app.listen(3333, function () { console.log("listening on 3333"); });

@@ -10,3 +10,4 @@ package-lock.json
 config.json
 appbundle.js
 appbundle.min.js
+test.js

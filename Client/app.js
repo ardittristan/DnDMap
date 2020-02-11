@@ -1,6 +1,10 @@
 //! initialize requirements
-var L = require('leaflet');
-var toastr = require('toastr');
+const L = require('leaflet');
+const toastr = require('toastr');
+const popupS = require('popups');
+const textToImage = require('text-to-image');
+const { read } = require('jimp/browser/lib/jimp.min.js');
+const sizeOf = require('image-size');
 require('leaflet-draw');
 require('leaflet-edgebuffer');
 require('./node_modules/leaflet-styleeditor/dist/javascript/Leaflet.StyleEditor.min');
@@ -77,6 +81,8 @@ map.addControl(styleEditor);
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
+var mapNames = new L.LayerGroup();
+
 // remove stuff from toolbar
 L.EditToolbar.Delete.include({
     removeAllLayers: false
@@ -110,7 +116,8 @@ map.addControl(drawControl);
 var overlaysTree = [
     { label: 'Markers', layer: drawnItems },
     { label: 'Hex Layer', layer: hexLayer },
-    { label: 'Color Overlay', layer: colorLayer }
+    { label: 'Color Overlay', layer: colorLayer },
+    { label: 'Country Names', layer: mapNames }
 ];
 L.control.layers.tree([], overlaysTree, { collapsed: false }).addTo(map);
 
@@ -139,6 +146,9 @@ L.easyButton('fa-link', function () {
     map.removeControl(viewMeta);
     toastr.info('Copy link from url to share current map position');
 }, 'Get link of current position').addTo(map);
+
+// add names to map
+L.easyButton('fa-lock', addTextOverlay, 'For DM only').addTo(map);
 
 //! create old objects on page load
 setTimeout(fetchOldMarkers, 100);
@@ -248,6 +258,19 @@ async function fetchOldMarkers() {
                         zIndexOffset: 2000
                     }).addTo(drawnItems);
                     //? doesn't allow for popups unless I do something fucky, idk
+                });
+            }
+        });
+    //* fetch text
+    fetch(`${serverIp}/fetchtext`)
+        .then(async function (response) {
+            var responseJSON = await response.json();
+            var array = responseJSON.text;
+            if (array.length != 0) {
+                array.forEach(async element => {
+                    var coordinates = await JSON.parse(element.latlng);
+                    var imageOverlay = L.imageOverlay(element.image, coordinates, { zIndex: 1000 });
+                    imageOverlay.addTo(mapNames);
                 });
             }
         });
@@ -415,4 +438,93 @@ map.on('zoomend', function () {
             hexLayer.setOpacity(0.4);
             break;
     };
+
+
 });
+
+
+//! functions
+//* adds a text on the map
+async function addTextOverlay() {
+    // start prompts
+    popupS.prompt({
+        content: "Fill in password",
+        onSubmit: function (val) {
+            // check if password is correct
+            if (val == config.password) {
+                popupS.confirm({
+                    // ask if the person is where he wants to be
+                    content: "Is the center of your screen the location where you want the marker?",
+                    labelOk: "Yes",
+                    labelCancel: "no",
+                    onSubmit: function () {
+                        popupS.prompt({
+                            // ask for name of text
+                            content: "What do you want the marker to be called?",
+                            onSubmit: function (val) {
+                                if (val != "") {
+                                    viewMeta.addTo(map).update();
+                                    map.removeControl(viewMeta);
+                                    var urlParams = new URLSearchParams(window.location.search);
+                                    var lat = urlParams.get("lat");
+                                    var lng = urlParams.get("lng");
+                                    // make image of text
+                                    textToImage.generate(val, {
+                                        maxWidth: 2000,
+                                        fontSize: 400,
+                                        fontFamily: 'Monotype Corsiva',
+                                        lineHeight: 410,
+                                        margin: 0,
+                                        bgColor: "transparent",
+                                        textColor: "black"
+                                    }).then(dataUrl => {
+                                        // make B64 image into image buffer
+                                        read(Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), 'base64'))
+                                            .then(image => {
+                                                // crop transparency off the image
+                                                image.autocrop();
+                                                // turn image back into B64
+                                                image.getBase64Async("image/png").then(image => {
+                                                    var dimensions = sizeOf(Buffer.from(image.replace(/^data:image\/png;base64,/, ""), 'base64'));
+                                                    var projection = rc.project([lat, lng]),
+                                                        // image bounds are moved 50% left and 50% up so it's centered
+                                                        imageBounds = [
+                                                            rc.unproject([projection.x - (dimensions.width / 2), projection.y - (dimensions.height / 2)]),
+                                                            rc.unproject([projection.x + (dimensions.width / 2), projection.y + (dimensions.height / 2)])
+                                                        ];
+                                                    // make and add image overlay
+                                                    var imageOverlay = L.imageOverlay(image, imageBounds, { zIndex: 1000 });
+                                                    imageOverlay.addTo(mapNames);
+                                                    // send input data to server
+                                                    fetch(`${serverIp}/addtext`, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json'
+                                                        },
+                                                        body: JSON.stringify({
+                                                            name: val,
+                                                            latlng: JSON.stringify(imageBounds),
+                                                            image: image
+                                                        })
+                                                    });
+                                                });
+                                            });
+                                    });
+                                }
+                            }
+                        });
+                    },
+                    onClose: function () {
+                        popupS.alert({
+                            content: "Please go to the location where you want the marker"
+                        });
+                    }
+                });
+            } else {
+                popupS.alert({
+                    content: "This is for DM only"
+                });
+            }
+        }
+    });
+}
