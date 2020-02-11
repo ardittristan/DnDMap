@@ -132,6 +132,9 @@ L.control.liveupdate({
         drawnItems.eachLayer(function (layer) {
             layer.remove();
         });
+        mapNames.eachLayer(function (layer) {
+            layer.remove();
+        });
         fetchOldMarkers();
     },
     position: 'bottomright',
