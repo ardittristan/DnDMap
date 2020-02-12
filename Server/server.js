@@ -5,6 +5,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
+const https = require('https');
+const fs = require('fs');
+const port = 3333;
+
+//* init https
+var cert = fs.readFileSync('./cert/cert.crt');
+var key = fs.readFileSync('./cert/private.key');
+var options = {
+    key: key,
+    cert: cert
+};
 
 //* add cors and bodyparser to express
 app.use(cors());
@@ -394,4 +405,7 @@ app.get('/fetchtext', function (_, res) {
 });
 
 //! starts listening on port 3333
-app.listen(3333, function () { console.log("listening on 3333"); });
+var server = https.createServer(options, app);
+server.listen(port, () => {
+    console.log(`listening on ${port}`);
+})
