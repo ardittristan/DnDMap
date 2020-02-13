@@ -19,7 +19,7 @@ var options = {
 
 //* add cors and bodyparser to express
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "50mb", extended: true, parameterLimit: 500000000 }));
 
 
 //! Init database
@@ -408,4 +408,11 @@ app.get('/fetchtext', function (_, res) {
 var server = https.createServer(options, app);
 server.listen(port, () => {
     console.log(`listening on ${port}`);
-})
+});
+
+//! database cleaning
+async function dbVacuum() {
+    db.run(/*sql*/`VACUUM "main"`);
+}
+dbVacuum;
+setInterval(dbVacuum, 86400000);
