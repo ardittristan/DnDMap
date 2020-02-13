@@ -460,7 +460,6 @@ async function addTextOverlay() {
                 });
                 return;
             }
-
             popupS.confirm({
                 // ask if the person is where he wants to be
                 content: "Is the center of your screen the location where you want the marker?",
@@ -470,57 +469,56 @@ async function addTextOverlay() {
                     popupS.prompt({
                         // ask for name of text
                         content: "What do you want the marker to be called?",
-                        onSubmit: async function (val) {
-                            if (val === "") return;
-
-                            viewMeta.addTo(map).update();
-                            map.removeControl(viewMeta);
-                            var urlParams = new URLSearchParams(window.location.search);
-                            var lat = urlParams.get("lat");
-                            var lng = urlParams.get("lng");
-                            // make image of text
-                            var dataUrl = await textToImage.generate(val, {
-                                maxWidth: 2000,
-                                fontSize: 400,
-                                fontFamily: 'Monotype Corsiva',
-                                lineHeight: 410,
-                                margin: 0,
-                                bgColor: "transparent",
-                                textColor: "black"
-                            });
-
-                            // make B64 image into image buffer
-                            var image = await read(Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), 'base64'));
-
-                            // crop transparency off the image
-                            image.autocrop();
-
-                            // turn image back into B64
-                            const b64Image = await image.getBase64Async("image/png");
-
-                            var dimensions = sizeOf(Buffer.from(image.replace(/^data:image\/png;base64,/, ""), 'base64'));
-                            var projection = rc.project([lat, lng]),
-                                // image bounds are moved 50% left and 50% up so it's centered
-                                imageBounds = [
-                                    rc.unproject([projection.x - (dimensions.width / 2), projection.y - (dimensions.height / 2)]),
-                                    rc.unproject([projection.x + (dimensions.width / 2), projection.y + (dimensions.height / 2)])
-                                ];
-                            // make and add image overlay
-                            var imageOverlay = L.imageOverlay(image, imageBounds, { zIndex: 1000 });
-                            imageOverlay.addTo(mapNames);
-                            
-                            // send input data to server
-                            fetch(`${serverIp}/addtext`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    name: val,
-                                    latlng: JSON.stringify(imageBounds),
-                                    image: image
-                                })
-                            });
+                        onSubmit: function (val) {
+                            if (val != "") {
+                                viewMeta.addTo(map).update();
+                                map.removeControl(viewMeta);
+                                var urlParams = new URLSearchParams(window.location.search);
+                                var lat = urlParams.get("lat");
+                                var lng = urlParams.get("lng");
+                                // make image of text
+                                textToImage.generate(val, {
+                                    maxWidth: 2000,
+                                    fontSize: 400,
+                                    fontFamily: 'Monotype Corsiva',
+                                    lineHeight: 410,
+                                    margin: 0,
+                                    bgColor: "transparent",
+                                    textColor: "black"
+                                }).then(dataUrl => {
+                                    // make B64 image into image buffer
+                                    read(Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ""), 'base64'))
+                                        .then(image => {
+                                            // crop transparency off the image
+                                            image.autocrop();
+                                            // turn image back into B64
+                                            image.getBase64Async("image/png").then(image => {
+                                                var dimensions = sizeOf(Buffer.from(image.replace(/^data:image\/png;base64,/, ""), 'base64'));
+                                                var projection = rc.project([lat, lng]),
+                                                    // image bounds are moved 50% left and 50% up so it's centered
+                                                    imageBounds = [
+                                                        rc.unproject([projection.x - (dimensions.width / 2), projection.y - (dimensions.height / 2)]),
+                                                        rc.unproject([projection.x + (dimensions.width / 2), projection.y + (dimensions.height / 2)])
+                                                    ];
+                                                // make and add image overlay
+                                                var imageOverlay = L.imageOverlay(image, imageBounds, { zIndex: 1000 });
+                                                imageOverlay.addTo(mapNames);
+                                                // send input data to server
+                                                fetch(`${serverIp}/addtext`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify({
+                                                        name: val,
+                                                        latlng: JSON.stringify(imageBounds),
+                                                        image: image
+                                                    })
+                                                });
+                                            });
+                                        });
+                                });
+                            }
                         }
                     });
                 },
@@ -530,6 +528,7 @@ async function addTextOverlay() {
                     });
                 }
             });
+
         }
     });
 }
