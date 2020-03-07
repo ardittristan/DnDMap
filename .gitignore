@@ -5,6 +5,8 @@ Client/hexTiles/*
 !Client/hexTiles/4
 Client/colorOverlay/*
 !Client/colorOverlay/3
+Client/legend/*
+!Client/legend/3
 package-lock.json
 *.db
 config.json

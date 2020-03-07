@@ -60,6 +60,14 @@ var colorLayer = L.tileLayer('./colorOverlay/{z}/{x}/{y}.png', {
     zIndexOffset: 3
 });
 
+// legend layer
+var legendLayer = L.tileLayer('./legend/{z}/{x}/{y}.png', {
+    bounds: [[13.54, -180], [86, 11.5]],
+    noWrap: true,
+    edgeBufferTiles: 2,
+    zIndexOffset: 10
+}).addTo(map)
+
 // url layer
 var viewMeta = L.control.viewMeta({
     position: 'bottomleft'
@@ -115,6 +123,7 @@ map.addControl(drawControl);
 // layer control
 var overlaysTree = [
     { label: 'Markers', layer: drawnItems },
+    { label: 'Legend', layer: legendLayer },
     { label: 'Hex Layer', layer: hexLayer },
     { label: 'Color Overlay', layer: colorLayer },
     { label: 'Country Names', layer: mapNames }
